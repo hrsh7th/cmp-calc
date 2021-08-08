@@ -15,14 +15,14 @@ end
 source.complete = function(self, request, callback)
   local input = self:_trim_right(string.sub(request.context.cursor_before_line, request.offset))
 
-  -- Ignore if input has no math operators.
-  if string.match(input, '^[%s%d%.]*$') ~= nil then
-    return callback()
-  end
-
   -- Analyze column count and program script.
   local program, delta = self:_analyze(input)
   if not program then
+    return callback()
+  end
+
+  -- Ignore if input has no math operators.
+  if string.match(program, '^[%s%d%.]*$') ~= nil then
     return callback()
   end
 
@@ -45,7 +45,7 @@ source.complete = function(self, request, callback)
       {
         word = input .. ' = ' .. value,
         label = program .. ' = ' .. value,
-        filterText = input .. table.concat(self:get_trigger_characters(), ''),
+        filterText = input .. table.concat(self:get_trigger_characters(), ''), -- keep completion menu after operator or whitespace.
         textEdit = {
           range = {
             start = {
