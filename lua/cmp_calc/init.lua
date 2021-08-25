@@ -45,7 +45,7 @@ source.complete = function(self, request, callback)
       {
         word = input .. ' = ' .. value,
         label = program .. ' = ' .. value,
-        filterText = input .. table.concat(self:get_trigger_characters(), ''), -- keep completion menu after operator or whitespace.
+        filterText = input .. string.rep(table.concat(self:get_trigger_characters(), ''), 2), -- keep completion menu after operator or whitespace.
         textEdit = {
           range = {
             start = {
