@@ -43,8 +43,8 @@ source.complete = function(self, request, callback)
   callback({
     items = {
       {
-        word = input .. ' = ' .. value,
-        label = program .. ' = ' .. value,
+        word = input,
+        label = program,
         filterText = input .. string.rep(table.concat(self:get_trigger_characters(), ''), 2), -- keep completion menu after operator or whitespace.
         textEdit = {
           range = {
@@ -60,6 +60,24 @@ source.complete = function(self, request, callback)
           newText = value,
         },
       },
+      {
+        word = input .. ' = ' .. value,
+        label = program .. ' = ' .. value,
+        filterText = input .. string.rep(table.concat(self:get_trigger_characters(), ''), 2), -- keep completion menu after operator or whitespace.
+        textEdit = {
+          range = {
+            start = {
+              line = request.context.cursor.row - 1,
+              character = delta + request.offset - 1,
+            },
+            ['end'] = {
+              line = request.context.cursor.row - 1,
+              character = request.context.cursor.col - 1,
+            },
+          },
+          newText = input .. ' = ' .. value,
+        },
+      }
     },
     isIncomplete = true,
   })
