@@ -43,8 +43,8 @@ source.complete = function(self, request, callback)
   callback({
     items = {
       {
-        word = input,
-        label = program,
+        word = value,
+        label = value,
         filterText = input .. string.rep(table.concat(self:get_trigger_characters(), ''), 2), -- keep completion menu after operator or whitespace.
         textEdit = {
           range = {
