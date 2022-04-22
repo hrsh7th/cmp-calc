@@ -1,3 +1,8 @@
+local math_keys = {}
+for key in pairs(math) do
+  table.insert(math_keys, key)
+end
+
 local source = {}
 
 source.new = function()
@@ -9,11 +14,16 @@ source.get_trigger_characters = function()
 end
 
 source.get_keyword_pattern = function()
-  return [[\%(\d\+\%(\.\d\+\)\?\|+\|\-\|/\|\*\|%\|\^\|(\|)\)\%(\d\+\%(\.\d\+\)\?\|+\|\-\|/\|\*\|%\|\^\|(\|)\|\s\)*]]
+  return ([[\s*\zs\%(\d\+\%(\.\d\+\)\?\|+\|\-\|/\|\*\|%\|\^\|(\|)\|\s\|%PAT%\)\+]]):gsub(vim.pesc('%PAT%'), table.concat(math_keys, '\\|'))
 end
 
 source.complete = function(self, request, callback)
   local input = self:_trim_right(string.sub(request.context.cursor_before_line, request.offset))
+
+  -- Resolve math_keys
+  for _, key in ipairs(math_keys) do
+    input = string.gsub(input, vim.pesc(key), 'math.' .. key)
+  end
 
   -- Analyze column count and program script.
   local program, delta = self:_analyze(input)
