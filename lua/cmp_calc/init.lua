@@ -10,11 +10,19 @@ source.new = function()
 end
 
 source.get_trigger_characters = function()
-  return { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ' ', '+', '-', '/', '*', ')' }
+  local chars = '0123456789 +-/*)'
+  for _, key in ipairs(math_keys) do
+    chars = chars .. key
+  end
+  return vim.fn.split(chars, [[\zs]])
 end
 
-source.get_keyword_pattern = function()
-  return ([[\s*\zs\%(\d\+\%(\.\d\+\)\?\|+\|\-\|/\|\*\|%\|\^\|(\|)\|\s\|%PAT%\)\+]]):gsub(vim.pesc('%PAT%'), table.concat(math_keys, '\\|'))
+source.get_keyword_pattern = function(self)
+  local keywords = {}
+  for _, key in ipairs(math_keys) do
+    table.insert(keywords, (self:_keyword(key)))
+  end
+  return ([[\s*\zs\%(\d\+\%(\.\d\+\)\?\|+\|\-\|/\|\*\|%\|\^\|(\|)\|\s\|%PAT%\)\+]]):gsub(vim.pesc('%PAT%'), table.concat(keywords, '\\|'))
 end
 
 source.complete = function(self, request, callback)
@@ -130,7 +138,15 @@ source._analyze = function(_, input)
 end
 
 source._trim_right = function(_, text)
-  return string.gsub(text, '[^%d%)]*$', '')
+  return string.gsub(text, '%s*$', '')
+end
+
+source._keyword = function(_, keyword)
+  local patterns = {}
+  for i = 1, #keyword do
+    table.insert(patterns, string.sub(keyword, i))
+  end
+  return table.concat(patterns, '\\|')
 end
 
 return source
