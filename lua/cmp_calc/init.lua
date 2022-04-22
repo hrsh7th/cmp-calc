@@ -10,7 +10,7 @@ source.new = function()
 end
 
 source.get_trigger_characters = function()
-  local chars = '0123456789 +-/*)'
+  local chars = ',0123456789 +-/*)'
   for _, key in ipairs(math_keys) do
     chars = chars .. key
   end
@@ -22,7 +22,7 @@ source.get_keyword_pattern = function(self)
   for _, key in ipairs(math_keys) do
     table.insert(keywords, (self:_keyword(key)))
   end
-  return ([[\s*\zs\%(\d\+\%(\.\d\+\)\?\|+\|\-\|/\|\*\|%\|\^\|(\|)\|\s\|%PAT%\)\+]]):gsub(vim.pesc('%PAT%'), table.concat(keywords, '\\|'))
+  return ([[\s*\zs\%(\d\+\%(\.\d\+\)\?\|,\|+\|\-\|/\|\*\|%\|\^\|(\|)\|\s\|%PAT%\)\+]]):gsub(vim.pesc('%PAT%'), table.concat(keywords, '\\|'))
 end
 
 source.complete = function(self, request, callback)
