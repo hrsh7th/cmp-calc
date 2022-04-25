@@ -36,18 +36,18 @@ source.complete = function(self, request, callback)
   -- Analyze column count and program script.
   local program, delta = self:_analyze(input)
   if not program then
-    return callback()
+    return callback({ isIncomplete = true })
   end
 
   -- Ignore if input has no math operators.
   if string.match(program, '^[%s%d%.]*$') ~= nil then
-    return callback()
+    return callback({ isIncomplete = true })
   end
 
   -- Ignore if failed to interpret to Lua.
   local m = load(('return (%s)'):format(program))
   if type(m) ~= 'function' then
-    return callback()
+    return callback({ isIncomplete = true })
   end
   local status, value = pcall(function()
     return '' .. m()
@@ -55,7 +55,7 @@ source.complete = function(self, request, callback)
 
   -- Ignore if return values is not a number.
   if not status then
-    return callback()
+    return callback({ isIncomplete = true })
   end
 
   callback({
