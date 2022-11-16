@@ -9,6 +9,10 @@ source.new = function()
   return setmetatable({}, { __index = source })
 end
 
+source.get_position_encoding_kind = function()
+  return 'utf-8'
+end
+
 source.get_trigger_characters = function()
   local chars = ',0123456789 +-/*)'
   for _, key in ipairs(math_keys) do
