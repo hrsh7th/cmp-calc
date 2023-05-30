@@ -14,15 +14,11 @@ source.get_position_encoding_kind = function()
 end
 
 source.get_trigger_characters = function()
-  local chars = ',0123456789)'
-  for _, key in ipairs(math_keys) do
-    chars = chars .. key
-  end
-  return vim.fn.split(chars, [[\zs]])
+  return source.trigger_chars
 end
 
-source.get_keyword_pattern = function(self)
-  return self._keyptn
+source.get_keyword_pattern = function()
+  return source._keyptn
 end
 
 source.complete = function(self, request, callback)
@@ -124,6 +120,8 @@ end
 source._trim_right = function(_, text)
   return string.gsub(text, '%s*$', '')
 end
+
+source.trigger_chars = {',','0','1','2','3','4','5','6','7','8','9',')'}
 
 -- Keyword matching pattern (vim regex)
 source._keyptn = [[\s*\zs\(\d\+\(\.\d\+\)\?\|[,+/*%^()-]\|\s\|]] ..
