@@ -14,7 +14,7 @@ source.get_position_encoding_kind = function()
 end
 
 source.get_trigger_characters = function()
-  local chars = ',0123456789 +-/*)'
+  local chars = ',0123456789)'
   for _, key in ipairs(math_keys) do
     chars = chars .. key
   end
@@ -22,11 +22,7 @@ source.get_trigger_characters = function()
 end
 
 source.get_keyword_pattern = function(self)
-  local keywords = {}
-  for _, key in ipairs(math_keys) do
-    table.insert(keywords, (self:_keyword(key)))
-  end
-  return ([[\s*\zs\%(\d\+\%(\.\d\+\)\?\|,\|+\|\-\|/\|\*\|%\|\^\|(\|)\|\s\|%PAT%\)\+]]):gsub(vim.pesc('%PAT%'), table.concat(keywords, '\\|'))
+  return self._keyptn
 end
 
 source.complete = function(self, request, callback)
@@ -49,17 +45,17 @@ source.complete = function(self, request, callback)
   end
 
   -- Ignore if failed to interpret to Lua.
-  local m = load(('return (%s)'):format(program))
+  local m = load('return ' .. program)
   if type(m) ~= 'function' then
     return callback({ isIncomplete = true })
   end
-  local status, value = pcall(function()
-    return '' .. m()
-  end)
+  local status, value = pcall(m)
 
-  -- Ignore if return values is not a number.
-  if not status then
+	-- Ignore if failed or not a number.
+  if not status or type(value) ~= "number" then
     return callback({ isIncomplete = true })
+	else
+		value = tostring(value)
   end
 
   callback({
@@ -106,51 +102,31 @@ source.complete = function(self, request, callback)
 end
 
 source._analyze = function(_, input)
-  local stack = {}
-  local unmatched_paren_count = 0
+  local unmatched_parens = 0
   local o = string.byte('(')
   local c = string.byte(')')
   for i = #input, 1, -1 do
     if string.byte(input, i) == c then
-      table.insert(stack, ')')
+      unmatched_parens=unmatched_parens-1
     elseif string.byte(input, i) == o then
-      if #stack > 0 then
-        table.remove(stack, #stack)
-      else
-        unmatched_paren_count = unmatched_paren_count + 1
-      end
-    end
-  end
-
-  local program = input
-  while true do
-    local fixed_program = string.gsub(program, '^%s*%(', '')
-    if fixed_program ~= program then
-      unmatched_paren_count = unmatched_paren_count - 1
-      program = fixed_program
-    else
-      break
+      unmatched_parens=unmatched_parens+1
     end
   end
 
   -- invalid math expression.
-  if unmatched_paren_count > 0 then
+  if unmatched_parens ~= 0 then
     return nil, nil
   end
 
-  return program, #input - #program
+  return input, 0
 end
 
 source._trim_right = function(_, text)
   return string.gsub(text, '%s*$', '')
 end
 
-source._keyword = function(_, keyword)
-  local patterns = {}
-  for i = 1, #keyword do
-    table.insert(patterns, string.sub(keyword, i))
-  end
-  return table.concat(patterns, '\\|')
-end
+-- Keyword matching pattern (vim regex)
+source._keyptn = [[\s*\zs\(\d\+\(\.\d\+\)\?\|[,+/*%^()-]\|\s\|]] ..
+  table.concat(math_keys, '\\|') .. '\\)\\+'
 
 return source
