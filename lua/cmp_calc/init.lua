@@ -14,7 +14,7 @@ source.get_position_encoding_kind = function()
 end
 
 source.get_trigger_characters = function()
-  return source.trigger_chars
+  return source._trigger_chars
 end
 
 source.get_keyword_pattern = function()
@@ -47,11 +47,11 @@ source.complete = function(self, request, callback)
   end
   local status, value = pcall(m)
 
-	-- Ignore if failed or not a number.
+  -- Ignore if failed or not a number.
   if not status or type(value) ~= "number" then
     return callback({ isIncomplete = true })
-	else
-		value = tostring(value)
+  else
+    value = tostring(value)
   end
 
   callback({
@@ -103,9 +103,13 @@ source._analyze = function(_, input)
   local c = string.byte(')')
   for i = #input, 1, -1 do
     if string.byte(input, i) == c then
-      unmatched_parens=unmatched_parens-1
+      unmatched_parens = unmatched_parens - 1
     elseif string.byte(input, i) == o then
-      unmatched_parens=unmatched_parens+1
+      if unmatched_parens == 0 then
+        -- going in reverse -> extra '(' won't get matched -> cut here
+        return string.sub(input, i + 1), i
+      end
+      unmatched_parens = unmatched_parens + 1
     end
   end
 
@@ -121,7 +125,7 @@ source._trim_right = function(_, text)
   return string.gsub(text, '%s*$', '')
 end
 
-source.trigger_chars = {',', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ')', ' '}
+source._trigger_chars = { ',', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ')' }
 
 -- Keyword matching pattern (vim regex)
 source._keyptn = [[\s*\zs\(\d\+\(\.\d\+\)\?\|[,+/*%^()-]\|\s\|]] ..
