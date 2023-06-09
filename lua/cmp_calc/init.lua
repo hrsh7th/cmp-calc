@@ -22,7 +22,7 @@ source.get_keyword_pattern = function()
 end
 
 source.complete = function(self, request, callback)
-  local input = self:_trim_right(string.sub(request.context.cursor_before_line, request.offset))
+  local input = string.sub(request.context.cursor_before_line, request.offset)
 
   -- Resolve math_keys
   for _, key in ipairs(math_keys) do
@@ -36,7 +36,7 @@ source.complete = function(self, request, callback)
   end
 
   -- Ignore if input has no math operators.
-  if string.match(program, '^[%s%d%.]*$') ~= nil then
+  if string.match(program, '^[ %d().]*$') ~= nil then
     return callback({ isIncomplete = true })
   end
 
@@ -121,14 +121,10 @@ source._analyze = function(_, input)
   return input, 0
 end
 
-source._trim_right = function(_, text)
-  return string.gsub(text, '%s*$', '')
-end
-
-source._trigger_chars = { ',', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ')' }
+source._trigger_chars = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ')' }
 
 -- Keyword matching pattern (vim regex)
-source._keyptn = [[\s*\zs\(\d\+\(\.\d\+\)\?\|[,+/*%^()-]\|\s\|]] ..
-  table.concat(math_keys, '\\|') .. '\\)\\+'
+source._keyptn = [[\s*\zs\(\d\+\(\.\d\+\)\?\|[ ()^*/%+-]\|]] ..
+  table.concat(math_keys, '\\|') .. [[\)\+]]
 
 return source
