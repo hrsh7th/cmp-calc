@@ -29,11 +29,15 @@ source.complete = function(self, request, callback)
     input = string.gsub(input, vim.pesc(key), 'math.' .. key)
   end
 
-  -- Analyze column count and program script.
-  local program, delta = self:_analyze(input)
-  if not program then
+  -- Analyze column count.
+  local delta = self:_analyze(input)
+  if not delta then
     return callback({ isIncomplete = true })
   end
+  while string.byte(input, delta + 1) == 32 do -- keep indent
+    delta = delta + 1
+  end
+  local program = string.sub(input, delta + 1)
 
   -- Ignore if input has no math operators.
   if string.match(program, '^[ %d().]*$') ~= nil then
@@ -57,9 +61,9 @@ source.complete = function(self, request, callback)
   callback({
     items = {
       {
-        word = value,
+        word = string.sub(input, 1, delta) .. value,
         label = value,
-        filterText = input .. string.rep(table.concat(self:get_trigger_characters(), ''), 2), -- keep completion menu after operator or whitespace.
+        filterText = input,
         textEdit = {
           range = {
             start = {
@@ -77,7 +81,7 @@ source.complete = function(self, request, callback)
       {
         word = input .. ' = ' .. value,
         label = program .. ' = ' .. value,
-        filterText = input .. string.rep(table.concat(self:get_trigger_characters(), ''), 2), -- keep completion menu after operator or whitespace.
+        filterText = input,
         textEdit = {
           range = {
             start = {
@@ -89,7 +93,7 @@ source.complete = function(self, request, callback)
               character = request.context.cursor.col - 1,
             },
           },
-          newText = input .. ' = ' .. value,
+          newText = program .. ' = ' .. value,
         },
       }
     },
@@ -107,18 +111,28 @@ source._analyze = function(_, input)
     elseif string.byte(input, i) == o then
       if unmatched_parens == 0 then
         -- going in reverse -> extra '(' won't get matched -> cut here
-        return string.sub(input, i + 1), i
+        return i
       end
       unmatched_parens = unmatched_parens + 1
     end
   end
 
-  -- invalid math expression.
-  if unmatched_parens ~= 0 then
-    return nil, nil
+  if unmatched_parens == 0 then
+    return 0
   end
 
-  return input, 0
+  for i = 1, #input do
+    if string.byte(input, i) == c then
+      unmatched_parens = unmatched_parens + 1
+      if unmatched_parens == 0 then
+        return i
+      end
+    elseif string.byte(input, i) == o then
+      unmatched_parens = unmatched_parens - 1
+    end
+  end
+
+  return nil -- expression ends with extra ')'
 end
 
 source._trigger_chars = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ')' }
