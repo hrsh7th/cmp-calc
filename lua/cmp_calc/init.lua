@@ -124,7 +124,8 @@ end
 source._trigger_chars = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', ')' }
 
 -- Keyword matching pattern (vim regex)
-source._keyptn = [[\s*\zs\(\d\+\(\.\d\+\)\?\(\e[+-]\?\d\+\)\?\|[ ()^*/%+-]\|]] ..
+--source._keyptn = [[\s*\zs\(\d\+\(\.\d\+\)\?\(\e\[\+\-\]\?\d\+\)\?\|[ ()^*/%+-]\|]] ..
+source._keyptn = [[\s*\zs\([ ()^*/%+-]\|]] ..
   table.concat(math_keys, '\\|') .. [[\)\+]]
 
 return source
